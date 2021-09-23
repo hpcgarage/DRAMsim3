@@ -10,6 +10,9 @@ MemorySystem::MemorySystem(const std::string &config_file,
     if (config_->IsHMC()) {
         dram_system_ = new HMCMemorySystem(*config_, output_dir, read_callback,
                                            write_callback);
+    } else if (config_->IsIdeal()) {
+        dram_system_ = new IdealDRAMSystem(*config_, output_dir, read_callback,
+                                           write_callback);
     } else {
         dram_system_ = new JedecDRAMSystem(*config_, output_dir, read_callback,
                                            write_callback);

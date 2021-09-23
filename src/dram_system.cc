@@ -185,6 +185,7 @@ bool IdealDRAMSystem::AddTransaction(uint64_t hex_addr, bool is_write) {
 }
 
 void IdealDRAMSystem::ClockTick() {
+    printf("%d", latency_);
     for (auto trans_it = infinite_buffer_q_.begin();
          trans_it != infinite_buffer_q_.end();) {
         if (clk_ - trans_it->added_cycle >= static_cast<uint64_t>(latency_)) {
