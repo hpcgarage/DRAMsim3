@@ -68,7 +68,7 @@ DRAMProtocol Config::GetDRAMProtocol(std::string protocol_str) {
         {"GDDR5", DRAMProtocol::GDDR5},   {"GDDR5X", DRAMProtocol::GDDR5X},  {"GDDR6", DRAMProtocol::GDDR6},
         {"LPDDR", DRAMProtocol::LPDDR},   {"LPDDR3", DRAMProtocol::LPDDR3},
         {"LPDDR4", DRAMProtocol::LPDDR4}, {"HBM", DRAMProtocol::HBM},
-        {"HBM2", DRAMProtocol::HBM2},     {"HMC", DRAMProtocol::HMC}, {"IDEAL", DRAMProtocol::IDEAL}};
+        {"HBM2", DRAMProtocol::HBM2},     {"HMC", DRAMProtocol::HMC}, {"MODEL_SWAP", DRAMProtocol::MODEL_SWAP}};
 
     if (protocol_pairs.find(protocol_str) == protocol_pairs.end()) {
         std::cout << "Unkwown/Unsupported DRAM Protocol: " << protocol_str

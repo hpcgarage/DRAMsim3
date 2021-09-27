@@ -185,7 +185,6 @@ bool IdealDRAMSystem::AddTransaction(uint64_t hex_addr, bool is_write) {
 }
 
 void IdealDRAMSystem::ClockTick() {
-    printf("%d", latency_);
     for (auto trans_it = infinite_buffer_q_.begin();
          trans_it != infinite_buffer_q_.end();) {
         if (clk_ - trans_it->added_cycle >= static_cast<uint64_t>(latency_)) {
@@ -202,6 +201,75 @@ void IdealDRAMSystem::ClockTick() {
     }
 
     clk_++;
+    return;
+}
+
+ModelSwapDRAMSystem::ModelSwapDRAMSystem(Config &config, const std::string &output_dir,
+                                 std::function<void(uint64_t)> read_callback,
+                                 std::function<void(uint64_t)> write_callback)
+    : BaseDRAMSystem(config, output_dir, read_callback, write_callback),
+    latency_(config_.ideal_memory_latency) {
+    if (config_.IsModelSwap()) {
+        std::cerr << "Initialized a memory system with online model swapping!"
+                  << std::endl;
+    }
+
+    ctrls_.reserve(config_.channels);
+
+    for (auto i = 0; i < config_.channels; i++) {
+        ctrls_.push_back(new Controller(i, config_, timing_));
+    }
+}
+
+ModelSwapDRAMSystem::~ModelSwapDRAMSystem() {
+    for (auto it = ctrls_.begin(); it != ctrls_.end(); it++) {
+        delete (*it);
+    }
+}
+
+bool ModelSwapDRAMSystem::WillAcceptTransaction(uint64_t hex_addr,
+                                                bool is_write) const {
+    int channel = GetChannel(hex_addr);
+    return ctrls_[channel]->WillAcceptTransaction(hex_addr, is_write);
+}
+
+bool ModelSwapDRAMSystem::AddTransaction(uint64_t hex_addr, bool is_write) {
+    int channel = GetChannel(hex_addr);
+    bool ok = ctrls_[channel]->WillAcceptTransaction(hex_addr, is_write);
+    assert(ok);
+    if (ok) {
+        Transaction trans = Transaction(hex_addr, is_write);
+        trans.added_cycle = clk_; 
+        trans.complete_cycle = clk_ + latency_;
+        printf("%d %d %d\n", trans.added_cycle, trans.complete_cycle, clk_);
+        ctrls_[channel]->AddTransaction(trans);
+    }
+    last_req_clk_ = clk_;
+    return ok;
+}
+
+void ModelSwapDRAMSystem::ClockTick() {
+    for (size_t i = 0; i < ctrls_.size(); i++) {
+        // look ahead and return earlier
+        while (true) {
+            auto pair = ctrls_[i]->ReturnDoneTrans(clk_);
+            if (pair.second == 1) {
+                write_callback_(pair.first);
+            } else if (pair.second == 0) {
+                read_callback_(pair.first);
+            } else {
+                break;
+            }
+        }
+    }
+    for (size_t i = 0; i < ctrls_.size(); i++) {
+        ctrls_[i]->ClockTick();
+    }
+    clk_++;
+
+    if (clk_ % config_.epoch_period == 0) {
+        PrintEpochStats();
+    }
     return;
 }
 

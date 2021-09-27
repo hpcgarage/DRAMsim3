@@ -22,7 +22,7 @@ enum class DRAMProtocol {
     HBM2,
     HMC,
     SIZE,
-    IDEAL
+    MODEL_SWAP
 };
 
 enum class RefreshPolicy {
@@ -156,7 +156,7 @@ class Config {
         return (protocol == DRAMProtocol::HBM ||
                 protocol == DRAMProtocol::HBM2);
     }
-    bool IsIdeal() const { return (protocol == DRAMProtocol::IDEAL); }
+    bool IsModelSwap() const { return (protocol == DRAMProtocol::MODEL_SWAP); }
     bool IsHMC() const { return (protocol == DRAMProtocol::HMC); }
     // yzy: add another function
     bool IsDDR4() const { return (protocol == DRAMProtocol::DDR4); }
