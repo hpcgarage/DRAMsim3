@@ -241,7 +241,6 @@ bool ModelSwapDRAMSystem::AddTransaction(uint64_t hex_addr, bool is_write) {
         Transaction trans = Transaction(hex_addr, is_write);
         trans.added_cycle = clk_; 
         trans.complete_cycle = clk_ + latency_;
-        printf("%d %d %d\n", trans.added_cycle, trans.complete_cycle, clk_);
         ctrls_[channel]->AddTransaction(trans);
     }
     last_req_clk_ = clk_;
@@ -250,21 +249,20 @@ bool ModelSwapDRAMSystem::AddTransaction(uint64_t hex_addr, bool is_write) {
 
 void ModelSwapDRAMSystem::ClockTick() {
     for (size_t i = 0; i < ctrls_.size(); i++) {
-        // look ahead and return earlier
-        while (true) {
-            auto pair = ctrls_[i]->ReturnDoneTrans(clk_);
-            if (pair.second == 1) {
-                write_callback_(pair.first);
-            } else if (pair.second == 0) {
-                read_callback_(pair.first);
-            } else {
-                break;
+        auto completed_transactions = ctrls_[i]->ReturnAllDoneTrans(clk_);
+        for (auto it = completed_transactions.begin(); it != completed_transactions.end(); it++) {
+            if (it->second == 1) {
+                write_callback_(it->first);
+            } else if (it->second == 0) {
+                read_callback_(it->first);
             }
         }
     }
+
     for (size_t i = 0; i < ctrls_.size(); i++) {
         ctrls_[i]->ClockTick();
     }
+
     clk_++;
 
     if (clk_ % config_.epoch_period == 0) {

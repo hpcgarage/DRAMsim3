@@ -42,6 +42,29 @@ Controller::Controller(int channel, const Config &config, const Timing &timing)
 #endif  // CMD_TRACE
 }
 
+std::vector<std::pair<uint64_t, int>> Controller::ReturnAllDoneTrans(uint64_t clk) {
+    std::vector<std::pair<uint64_t, int>> completed_transactions;
+
+    auto it = return_queue_.begin();
+    while (it != return_queue_.end()) {
+        if (clk >= it->complete_cycle) {
+            if (it->is_write) {
+                simple_stats_.Increment("num_writes_done");
+            } else {
+                simple_stats_.Increment("num_reads_done");
+                simple_stats_.AddValue("read_latency", clk_ - it->added_cycle);
+            }
+            auto pair = std::make_pair(it->addr, it->is_write);
+            it = return_queue_.erase(it);
+            completed_transactions.push_back(pair);
+        } else {
+            ++it;
+        }
+    }
+    
+    return completed_transactions;
+}
+
 std::pair<uint64_t, int> Controller::ReturnDoneTrans(uint64_t clk) {
     auto it = return_queue_.begin();
     while (it != return_queue_.end()) {
