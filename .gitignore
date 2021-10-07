@@ -46,3 +46,7 @@ release
 
 # IDEs / Editors
 .vscode/
+
+# Temporary traces
+dramsim3.json
+dramsim3.txt
