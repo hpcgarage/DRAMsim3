@@ -89,4 +89,23 @@ void TraceBasedCPU::ClockTick() {
     return;
 }
 
+void OnlineCPU::ClockTick() {
+    memory_system_.ClockTick();
+    clk_++;
+    if (canSend) {
+        memory_system_.AddTransaction(curr_addr, curr_is_write);
+    }
+    canSend = false;
+    return;
+}
+
+bool OnlineCPU::canSendTransaction(uint64_t addr, bool is_write) {
+    canSend = memory_system_.WillAcceptTransaction(addr, is_write);
+    if (canSend) {
+        curr_addr = addr;
+        curr_is_write = is_write;
+    }
+    return canSend;
+}
+
 }  // namespace dramsim3

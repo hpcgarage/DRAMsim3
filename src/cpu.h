@@ -67,5 +67,19 @@ class TraceBasedCPU : public CPU {
     bool get_next_ = true;
 };
 
+
+class OnlineCPU : public CPU {
+
+    public:
+        using CPU::CPU;
+        void ClockTick() override;
+        bool canSendTransaction(uint64_t addr, bool is_write);
+
+    private:
+        bool canSend = true;
+        uint64_t curr_addr;
+        bool curr_is_write;
+};
+
 }  // namespace dramsim3
 #endif
