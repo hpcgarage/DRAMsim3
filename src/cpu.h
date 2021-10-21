@@ -21,6 +21,7 @@ class CPU {
     void ReadCallBack(uint64_t addr) { return; }
     void WriteCallBack(uint64_t addr) { return; }
     void PrintStats() { memory_system_.PrintStats(); }
+    void ResetStats() { memory_system_.ResetStats(); }
 
    protected:
     MemorySystem memory_system_;
