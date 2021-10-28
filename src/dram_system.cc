@@ -173,7 +173,12 @@ IdealDRAMSystem::IdealDRAMSystem(Config &config, const std::string &output_dir,
                                  std::function<void(uint64_t)> read_callback,
                                  std::function<void(uint64_t)> write_callback)
     : BaseDRAMSystem(config, output_dir, read_callback, write_callback),
-      latency_(config_.ideal_memory_latency) {}
+      latency_(config_.ideal_memory_latency) {
+          if (config_.IsModelSwap()) {
+              std::cerr << "Initialized an ideal memory system!"
+                << std::endl;
+            }
+      }
 
 IdealDRAMSystem::~IdealDRAMSystem() {}
 
