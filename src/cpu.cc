@@ -108,4 +108,8 @@ bool OnlineCPU::canSendTransaction(uint64_t addr, bool is_write) {
     return canSend;
 }
 
+void OnlineCPU::RegisterCallbacks(std::function<void(uint64_t)> read_callback, std::function<void(uint64_t)> write_callback) {
+    memory_system_.RegisterCallbacks(read_callback, write_callback);
+}
+
 }  // namespace dramsim3

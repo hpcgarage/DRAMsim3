@@ -75,6 +75,8 @@ class OnlineCPU : public CPU {
         using CPU::CPU;
         void ClockTick() override;
         bool canSendTransaction(uint64_t addr, bool is_write);
+        void RegisterCallbacks(std::function<void(uint64_t)> read_callback,
+                           std::function<void(uint64_t)> write_callback);
 
     private:
         bool canSend = true;
