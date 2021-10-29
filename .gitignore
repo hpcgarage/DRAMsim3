@@ -51,9 +51,11 @@ release
 dramsim3.json
 dramsim3.txt
 
-
 # CMake stuff
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 Makefile
+
+# DS_Store
+.DS_Store
