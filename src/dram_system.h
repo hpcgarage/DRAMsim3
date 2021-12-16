@@ -98,6 +98,7 @@ class ModelSwapDRAMSystem : public BaseDRAMSystem {
                     std::function<void(uint64_t)> write_callback);
     ~ModelSwapDRAMSystem();
     bool WillAcceptTransaction(uint64_t hex_addr, bool is_write) const override;
+    bool AddTransactionByPhase(uint64_t hex_addr, bool is_write, int64_t phase_id, uint64_t latency);
     bool AddTransaction(uint64_t hex_addr, bool is_write) override;
     void ClockTick() override;
 

@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <map>
 
 namespace dramsim3 {
 
@@ -48,9 +49,15 @@ std::vector<std::pair<uint64_t, int>> Controller::ReturnAllDoneTrans(uint64_t cl
     auto it = return_queue_.begin();
     while (it != return_queue_.end()) {
         if (clk >= it->complete_cycle) {
+#ifdef PHASEANALYSIS
+            phase_stats.AddValue("expected_transaction_latency", it->complete_cycle - it->added_cycle, it->phase_id);
+#endif
             if (it->is_write) {
                 simple_stats_.Increment("num_writes_done");
             } else {
+#ifdef PHASEANALYSIS
+                phase_stats.AddValue("read_latency", clk_ - it->added_cycle, it->phase_id);
+#endif
                 simple_stats_.Increment("num_reads_done");
                 simple_stats_.AddValue("read_latency", clk_ - it->added_cycle);
             }
@@ -183,6 +190,10 @@ bool Controller::WillAcceptTransaction(uint64_t hex_addr, bool is_write) const {
 
 bool Controller::AddTransaction(Transaction trans) {
     trans.added_cycle = clk_;
+
+#ifdef PHASEANALYSIS
+    phase_stats.AddValue("interarrival_latency", clk_ - last_trans_clk_, trans.phase_id);
+#endif
     simple_stats_.AddValue("interarrival_latency", clk_ - last_trans_clk_);
     last_trans_clk_ = clk_;
 

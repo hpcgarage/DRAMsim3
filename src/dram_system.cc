@@ -238,18 +238,28 @@ bool ModelSwapDRAMSystem::WillAcceptTransaction(uint64_t hex_addr,
     return ctrls_[channel]->WillAcceptTransaction(hex_addr, is_write);
 }
 
-bool ModelSwapDRAMSystem::AddTransaction(uint64_t hex_addr, bool is_write) {
+bool ModelSwapDRAMSystem::AddTransactionByPhase(uint64_t hex_addr, bool is_write, int64_t phase_id, uint64_t latency=-1) {
     int channel = GetChannel(hex_addr);
     bool ok = ctrls_[channel]->WillAcceptTransaction(hex_addr, is_write);
     assert(ok);
     if (ok) {
+#ifdef PHASEANALYSIS
+        Transaction trans = Transaction(hex_addr, is_write, phase_id);
+#else
         Transaction trans = Transaction(hex_addr, is_write);
+#endif
         trans.added_cycle = clk_; 
-        trans.complete_cycle = clk_ + latency_;
+        if (latency != -1) {
+            trans.complete_cycle = clk_ + latency_;
+        }
         ctrls_[channel]->AddTransaction(trans);
     }
     last_req_clk_ = clk_;
     return ok;
+}
+
+bool ModelSwapDRAMSystem::AddTransaction(uint64_t hex_addr, bool is_write) {
+    return AddTransactionByPhase(hex_addr, is_write, -1);
 }
 
 void ModelSwapDRAMSystem::ClockTick() {
