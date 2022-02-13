@@ -89,6 +89,7 @@ void TraceBasedCPU::ClockTick() {
     return;
 }
 
+// Adds ability to call phase model from DRAMsim3
 void OnlineCPU::ClockTick() {
     memory_system_.ClockTick();
     clk_++;

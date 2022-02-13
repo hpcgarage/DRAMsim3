@@ -40,6 +40,7 @@ add_library(dramsim3 SHARED
     src/timing.cc
     src/memory_system.cc
     src/phase_stats.cc
+    src/phase_detector.cc
 )
 
 if (THERMAL)

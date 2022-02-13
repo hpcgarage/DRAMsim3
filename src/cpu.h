@@ -70,7 +70,6 @@ class TraceBasedCPU : public CPU {
 
 
 class OnlineCPU : public CPU {
-
     public:
         using CPU::CPU;
         void ClockTick() override;
