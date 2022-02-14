@@ -58,14 +58,14 @@ int main(int argc, const char **argv) {
     std::string trace_file = args::get(trace_file_arg);
     std::string stream_type = args::get(stream_arg);
 
-    CPU *cpu;
-
     if (phase_model_arg) {
-        cpu = new OnlineCPU(config_file, output_dir);
+        OnlineCPU *online_cpu = new OnlineCPU(config_file, output_dir);
         std::string input_files = args::get(phase_model_input_files_arg);
-        run_phase_detector(cpu, input_files);
+        run_phase_detector(online_cpu, input_files);
         return 0;
     }
+
+    CPU *cpu;
 
     if (!trace_file.empty()) {
         cpu = new TraceBasedCPU(config_file, output_dir, trace_file);
