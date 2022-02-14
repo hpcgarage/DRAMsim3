@@ -8,10 +8,12 @@ using namespace dramsim3;
 int main(int argc, const char **argv) {
     args::ArgumentParser parser(
         "DRAM Simulator.",
-        "Examples: \n."
+        "Examples: \n"
         "./build/dramsim3main configs/DDR4_8Gb_x8_3200.ini -c 100 -t "
         "sample_trace.txt\n"
-        "./build/dramsim3main configs/DDR4_8Gb_x8_3200.ini -s random -c 100");
+        "./build/dramsim3main configs/DDR4_8Gb_x8_3200.ini -s random -c 100\n"
+        "./build/dramsim3main configs/DDR4_8Gb_x8_3200.ini -p -i phase_trace.txt");
+        
     args::HelpFlag help(parser, "help", "Display the help menu", {'h', "help"});
     args::ValueFlag<uint64_t> num_cycles_arg(parser, "num_cycles",
                                              "Number of cycles to simulate",
@@ -32,7 +34,7 @@ int main(int argc, const char **argv) {
         parser, "phase_model", "Enable phase model. Requires an input file specified using -i", 
         {'p', "phasemodel"});
     args::ValueFlag<std::string> phase_model_input_files_arg(
-        parser, "phase_model_input_file",
+        parser, "file_name",
         "Input file for phase model",
         {'i', "inputfile"});
 
