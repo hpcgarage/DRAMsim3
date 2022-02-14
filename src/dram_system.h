@@ -90,5 +90,22 @@ class IdealDRAMSystem : public BaseDRAMSystem {
     std::vector<Transaction> infinite_buffer_q_;
 };
 
+// DRAM system used for online model swapping
+class ModelSwapDRAMSystem : public BaseDRAMSystem {
+   public:
+    ModelSwapDRAMSystem(Config &config, const std::string &output_dir,
+                    std::function<void(uint64_t)> read_callback,
+                    std::function<void(uint64_t)> write_callback);
+    ~ModelSwapDRAMSystem();
+    bool WillAcceptTransaction(uint64_t hex_addr, bool is_write) const override;
+    bool AddTransactionByPhase(uint64_t hex_addr, bool is_write, int64_t phase_id, uint64_t latency);
+    bool AddTransaction(uint64_t hex_addr, bool is_write) override;
+    void ClockTick() override;
+
+   private:
+    int latency_;
+    std::vector<Transaction> infinite_buffer_q_;
+};
+
 }  // namespace dramsim3
 #endif  // __DRAM_SYSTEM_H

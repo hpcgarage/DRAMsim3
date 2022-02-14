@@ -13,6 +13,9 @@ namespace dramsim3 {
 
 class SimpleStats {
    public:
+#ifdef PHASEANALYSIS
+    SimpleStats();
+#endif
     SimpleStats(const Config& config, int channel_id);
     // incrementing counter
     void Increment(const std::string name) { epoch_counters_[name] += 1; }

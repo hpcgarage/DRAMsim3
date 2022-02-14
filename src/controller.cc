@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <map>
 
 namespace dramsim3 {
 
@@ -40,6 +41,35 @@ Controller::Controller(int channel, const Config &config, const Timing &timing)
     std::cout << "Command Trace write to " << trace_file_name << std::endl;
     cmd_trace_.open(trace_file_name, std::ofstream::out);
 #endif  // CMD_TRACE
+}
+
+std::vector<std::pair<uint64_t, int>> Controller::ReturnAllDoneTrans(uint64_t clk) {
+    std::vector<std::pair<uint64_t, int>> completed_transactions;
+
+    auto it = return_queue_.begin();
+    while (it != return_queue_.end()) {
+        if (clk >= it->complete_cycle) {
+#ifdef PHASEANALYSIS
+            phase_stats.AddValue("expected_transaction_latency", it->complete_cycle - it->added_cycle, it->phase_id);
+#endif
+            if (it->is_write) {
+                simple_stats_.Increment("num_writes_done");
+            } else {
+#ifdef PHASEANALYSIS
+                phase_stats.AddValue("read_latency", clk_ - it->added_cycle, it->phase_id);
+#endif
+                simple_stats_.Increment("num_reads_done");
+                simple_stats_.AddValue("read_latency", clk_ - it->added_cycle);
+            }
+            auto pair = std::make_pair(it->addr, it->is_write);
+            it = return_queue_.erase(it);
+            completed_transactions.push_back(pair);
+        } else {
+            ++it;
+        }
+    }
+    
+    return completed_transactions;
 }
 
 std::pair<uint64_t, int> Controller::ReturnDoneTrans(uint64_t clk) {
@@ -160,6 +190,10 @@ bool Controller::WillAcceptTransaction(uint64_t hex_addr, bool is_write) const {
 
 bool Controller::AddTransaction(Transaction trans) {
     trans.added_cycle = clk_;
+
+#ifdef PHASEANALYSIS
+    phase_stats.AddValue("interarrival_latency", clk_ - last_trans_clk_, trans.phase_id);
+#endif
     simple_stats_.AddValue("interarrival_latency", clk_ - last_trans_clk_);
     last_trans_clk_ = clk_;
 

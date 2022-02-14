@@ -21,6 +21,7 @@ class CPU {
     void ReadCallBack(uint64_t addr) { return; }
     void WriteCallBack(uint64_t addr) { return; }
     void PrintStats() { memory_system_.PrintStats(); }
+    void ResetStats() { memory_system_.ResetStats(); }
 
    protected:
     MemorySystem memory_system_;
@@ -65,6 +66,21 @@ class TraceBasedCPU : public CPU {
     std::ifstream trace_file_;
     Transaction trans_;
     bool get_next_ = true;
+};
+
+
+class OnlineCPU : public CPU {
+    public:
+        using CPU::CPU;
+        void ClockTick() override;
+        bool canSendTransaction(uint64_t addr, bool is_write);
+        void RegisterCallbacks(std::function<void(uint64_t)> read_callback,
+                           std::function<void(uint64_t)> write_callback);
+
+    private:
+        bool canSend = true;
+        uint64_t curr_addr;
+        bool curr_is_write;
 };
 
 }  // namespace dramsim3

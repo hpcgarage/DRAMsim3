@@ -173,7 +173,12 @@ IdealDRAMSystem::IdealDRAMSystem(Config &config, const std::string &output_dir,
                                  std::function<void(uint64_t)> read_callback,
                                  std::function<void(uint64_t)> write_callback)
     : BaseDRAMSystem(config, output_dir, read_callback, write_callback),
-      latency_(config_.ideal_memory_latency) {}
+      latency_(config_.ideal_memory_latency) {
+          if (config_.IsModelSwap()) {
+              std::cerr << "Initialized an ideal memory system!"
+                << std::endl;
+            }
+      }
 
 IdealDRAMSystem::~IdealDRAMSystem() {}
 
@@ -201,6 +206,83 @@ void IdealDRAMSystem::ClockTick() {
     }
 
     clk_++;
+    return;
+}
+
+ModelSwapDRAMSystem::ModelSwapDRAMSystem(Config &config, const std::string &output_dir,
+                                 std::function<void(uint64_t)> read_callback,
+                                 std::function<void(uint64_t)> write_callback)
+    : BaseDRAMSystem(config, output_dir, read_callback, write_callback),
+    latency_(config_.ideal_memory_latency) {
+    if (config_.IsModelSwap()) {
+        std::cerr << "Initialized a memory system with online model swapping!"
+                  << std::endl;
+    }
+
+    ctrls_.reserve(config_.channels);
+
+    for (auto i = 0; i < config_.channels; i++) {
+        ctrls_.push_back(new Controller(i, config_, timing_));
+    }
+}
+
+ModelSwapDRAMSystem::~ModelSwapDRAMSystem() {
+    for (auto it = ctrls_.begin(); it != ctrls_.end(); it++) {
+        delete (*it);
+    }
+}
+
+bool ModelSwapDRAMSystem::WillAcceptTransaction(uint64_t hex_addr,
+                                                bool is_write) const {
+    int channel = GetChannel(hex_addr);
+    return ctrls_[channel]->WillAcceptTransaction(hex_addr, is_write);
+}
+
+bool ModelSwapDRAMSystem::AddTransactionByPhase(uint64_t hex_addr, bool is_write, int64_t phase_id, uint64_t latency=-1) {
+    int channel = GetChannel(hex_addr);
+    bool ok = ctrls_[channel]->WillAcceptTransaction(hex_addr, is_write);
+    assert(ok);
+    if (ok) {
+#ifdef PHASEANALYSIS
+        Transaction trans = Transaction(hex_addr, is_write, phase_id);
+#else
+        Transaction trans = Transaction(hex_addr, is_write);
+#endif
+        trans.added_cycle = clk_; 
+        if (latency != -1) {
+            trans.complete_cycle = clk_ + latency_;
+        }
+        ctrls_[channel]->AddTransaction(trans);
+    }
+    last_req_clk_ = clk_;
+    return ok;
+}
+
+bool ModelSwapDRAMSystem::AddTransaction(uint64_t hex_addr, bool is_write) {
+    return AddTransactionByPhase(hex_addr, is_write, -1);
+}
+
+void ModelSwapDRAMSystem::ClockTick() {
+    for (size_t i = 0; i < ctrls_.size(); i++) {
+        auto completed_transactions = ctrls_[i]->ReturnAllDoneTrans(clk_);
+        for (auto it = completed_transactions.begin(); it != completed_transactions.end(); it++) {
+            if (it->second == 1) {
+                write_callback_(it->first);
+            } else if (it->second == 0) {
+                read_callback_(it->first);
+            }
+        }
+    }
+
+    for (size_t i = 0; i < ctrls_.size(); i++) {
+        ctrls_[i]->ClockTick();
+    }
+
+    clk_++;
+
+    if (clk_ % config_.epoch_period == 0) {
+        PrintEpochStats();
+    }
     return;
 }
 

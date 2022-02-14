@@ -1,16 +1,19 @@
 #include <iostream>
 #include "./../ext/headers/args.hxx"
 #include "cpu.h"
+#include "phase_detector.h"
 
 using namespace dramsim3;
 
 int main(int argc, const char **argv) {
     args::ArgumentParser parser(
         "DRAM Simulator.",
-        "Examples: \n."
+        "Examples: \n"
         "./build/dramsim3main configs/DDR4_8Gb_x8_3200.ini -c 100 -t "
         "sample_trace.txt\n"
-        "./build/dramsim3main configs/DDR4_8Gb_x8_3200.ini -s random -c 100");
+        "./build/dramsim3main configs/DDR4_8Gb_x8_3200.ini -s random -c 100\n"
+        "./build/dramsim3main configs/DDR4_8Gb_x8_3200.ini -p -i phase_trace.txt");
+        
     args::HelpFlag help(parser, "help", "Display the help menu", {'h', "help"});
     args::ValueFlag<uint64_t> num_cycles_arg(parser, "num_cycles",
                                              "Number of cycles to simulate",
@@ -27,6 +30,13 @@ int main(int argc, const char **argv) {
         {'t', "trace"});
     args::Positional<std::string> config_arg(
         parser, "config", "The config file name (mandatory)");
+    args::Flag phase_model_arg(
+        parser, "phase_model", "Enable phase model. Requires an input file specified using -i", 
+        {'p', "phasemodel"});
+    args::ValueFlag<std::string> phase_model_input_files_arg(
+        parser, "file_name",
+        "Input file for phase model",
+        {'i', "inputfile"});
 
     try {
         parser.ParseCLI(argc, argv);
@@ -50,7 +60,15 @@ int main(int argc, const char **argv) {
     std::string trace_file = args::get(trace_file_arg);
     std::string stream_type = args::get(stream_arg);
 
+    if (phase_model_arg) {
+        OnlineCPU *online_cpu = new OnlineCPU(config_file, output_dir);
+        std::string input_files = args::get(phase_model_input_files_arg);
+        run_phase_detector(online_cpu, input_files);
+        return 0;
+    }
+
     CPU *cpu;
+
     if (!trace_file.empty()) {
         cpu = new TraceBasedCPU(config_file, output_dir, trace_file);
     } else {
